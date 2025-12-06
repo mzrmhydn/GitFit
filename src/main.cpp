@@ -62,14 +62,101 @@ void playBeep() {
 
 void printMainBanner() {
     cout << "=====================================================\n";
-    cout << "   ____ _ _   _____ _ _   \n";
-    cout << "  / ___(_) | |_   _(_| |_ \n";
-    cout << " | |  _| | |   | |  | | __|\n";
-    cout << " | |_| | | |___| |  | | |_ \n";
-    cout << "  \\____|_|_____|_|  |_|\\__|\n";
-    cout << "                Your Console Fitness Buddy\n";
-    cout << "=====================================================\n";
-    cout << "          [==]----o  GITFIT  o----[==]\n\n";
+    cout << "  ____    ___    _____   ______    ___    _____ \n";
+    cout << " / ___|  |_ _|  |_   _|  |  ___|  |_ _|  |_   _|\n";
+    cout << "| |  _    | |     | |    | |_      | |     | |  \n";
+    cout << "| |_| |   | |     | |    |  _|     | |     | |  \n";
+    cout << " \\____|  |___|    |_|    |_|      |___|    |_|  \n";
+    cout << "\n";
+    cout << "               GitFit - Your Fitness Buddy\n";
+    cout << "=====================================================\n\n";
+}
+
+
+
+
+
+// ----------- INPUT VALIDATION HELPERS -----------
+
+int getIntInRange(const string &prompt, int minVal, int maxVal) {
+    int value;
+    while (true) {
+        cout << prompt;
+        if (!(cin >> value)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a number.\n";
+            continue;
+        }
+        if (value < minVal || value > maxVal) {
+            cout << "Please enter a value between " << minVal
+                 << " and " << maxVal << ".\n";
+            continue;
+        }
+        return value;
+    }
+}
+
+float getFloatInRange(const string &prompt, float minVal, float maxVal) {
+    float value;
+    while (true) {
+        cout << prompt;
+        if (!(cin >> value)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a number.\n";
+            continue;
+        }
+        if (value < minVal || value > maxVal) {
+            cout << "Please enter a value between " << minVal
+                 << " and " << maxVal << ".\n";
+            continue;
+        }
+        return value;
+    }
+}
+
+char getCharFromOptions(const string &prompt, const string &options) {
+    char c;
+    while (true) {
+        cout << prompt;
+        if (!(cin >> c)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Try again.\n";
+            continue;
+        }
+        bool ok = false;
+        for (char o : options) {
+            if (c == o) {
+                ok = true;
+                break;
+            }
+        }
+        if (!ok) {
+            cout << "Please enter one of [";
+            for (char o : options) cout << o;
+            cout << "].\n";
+            continue;
+        }
+        return c;
+    }
+}
+
+char getYesNo(const string &prompt) {
+    char c;
+    while (true) {
+        cout << prompt;
+        if (!(cin >> c)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Enter y or n.\n";
+            continue;
+        }
+        c = static_cast<char>(tolower(c));
+        if (c == 'y' || c == 'n') return c;
+        cout << "Please enter 'y' or 'n'.\n";
+    }
 }
 
 // ===================== PROFILE HANDLING =====================
@@ -151,66 +238,12 @@ int chooseProfileIndex(UserProfile profiles[], int count) {
     }
 
     listProfiles(profiles, count);
-    cout << "\nEnter profile number to select (0 to cancel): ";
-    int choice;
-    cin >> choice;
-
-    if (choice <= 0 || choice > count) return -1;
+    int choice = getIntInRange("\nEnter profile number to select (0 to cancel): ", 0, count);
+    if (choice == 0) return -1;
     return choice - 1;
 }
 
-void inputProfileData(UserProfile &user, bool isUpdate) {
-    clearScreen();
-    printMainBanner();
-
-    if (isUpdate)
-        cout << ">>> Update Current Profile\n\n";
-    else
-        cout << ">>> Create New Profile\n\n";
-
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-    cout << "Enter name: ";
-    getline(cin, user.name);
-
-    cout << "Enter age: ";
-    cin >> user.age;
-
-    cout << "Enter gender (M/F): ";
-    cin >> user.gender;
-
-    cout << "Enter height (in cm): ";
-    cin >> user.heightCm;
-
-    cout << "Enter weight (in kg): ";
-    cin >> user.weightKg;
-
-    cout << "\nChoose main goal:\n";
-    cout << " 1) lose      - Fat loss\n";
-    cout << " 2) maintain  - General fitness\n";
-    cout << " 3) gain      - Weight / muscle gain\n";
-    cout << " 4) strength  - Get stronger\n";
-    cout << " 5) stamina   - Improve endurance\n";
-    cout << "Enter choice (1-5): ";
-    int g;
-    cin >> g;
-    if      (g == 1) user.goal = "lose";
-    else if (g == 2) user.goal = "maintain";
-    else if (g == 3) user.goal = "gain";
-    else if (g == 4) user.goal = "strength";
-    else             user.goal = "stamina";
-
-    cout << "\nDiet preference:\n";
-    cout << " 1) veg\n";
-    cout << " 2) non-veg\n";
-    cout << "Enter choice (1-2): ";
-    int d;
-    cin >> d;
-    user.dietPreference = (d == 1 ? "veg" : "non-veg");
-
-    playBeep();
-    cout << "\nProfile info captured!\n";
-}
+// --------- CREATE PROFILE ---------
 
 void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
     if (count >= MAX_PROFILES) {
@@ -219,8 +252,42 @@ void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
         return;
     }
 
+    clearScreen();
+    printMainBanner();
+    cout << ">>> Create New Profile\n\n";
+
     UserProfile u;
-    inputProfileData(u, false);
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "Enter name: ";
+    getline(cin, u.name);
+
+    u.age = getIntInRange("Enter age (10-100): ", 10, 100);
+    u.gender = getCharFromOptions("Enter gender (M/F): ", "MmFf");
+    u.heightCm = getFloatInRange("Enter height (in cm, 100-250): ", 100.0f, 250.0f);
+    u.weightKg = getFloatInRange("Enter weight (in kg, 30-250): ", 30.0f, 250.0f);
+
+    cout << "\nChoose main goal:\n";
+    cout << " 1) lose      - Fat loss\n";
+    cout << " 2) maintain  - General fitness\n";
+    cout << " 3) gain      - Weight / muscle gain\n";
+    cout << " 4) strength  - Get stronger\n";
+    cout << " 5) stamina   - Improve endurance\n";
+    int g = getIntInRange("Enter choice (1-5): ", 1, 5);
+    if      (g == 1) u.goal = "lose";
+    else if (g == 2) u.goal = "maintain";
+    else if (g == 3) u.goal = "gain";
+    else if (g == 4) u.goal = "strength";
+    else             u.goal = "stamina";
+
+    cout << "\nDiet preference:\n";
+    cout << " 1) veg\n";
+    cout << " 2) non-veg\n";
+    int d = getIntInRange("Enter choice (1-2): ", 1, 2);
+    u.dietPreference = (d == 1 ? "veg" : "non-veg");
+
+    playBeep();
+    cout << "\nProfile info captured!\n";
 
     profiles[count] = u;
     count++;
@@ -231,18 +298,7 @@ void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
     pauseScreen();
 }
 
-void updateCurrentProfile(UserProfile profiles[], int count, int currentIndex) {
-    if (currentIndex < 0 || currentIndex >= count) {
-        cout << "No active profile to update.\n";
-        pauseScreen();
-        return;
-    }
-
-    inputProfileData(profiles[currentIndex], true);
-    saveAllProfiles(profiles, count);
-    cout << "\nProfile updated successfully.\n";
-    pauseScreen();
-}
+// --------- VIEW PROFILE ---------
 
 void viewProfile(const UserProfile &user) {
     clearScreen();
@@ -258,6 +314,96 @@ void viewProfile(const UserProfile &user) {
     cout << " Diet Preference: " << user.dietPreference << '\n';
     cout << "\n ---------------------------------------------------\n";
     pauseScreen();
+}
+
+// --------- UPDATE PROFILE (field-wise with back) ---------
+
+void updateCurrentProfile(UserProfile profiles[], int count, int currentIndex) {
+    if (currentIndex < 0 || currentIndex >= count) {
+        cout << "No active profile to update.\n";
+        pauseScreen();
+        return;
+    }
+
+    bool done = false;
+    while (!done) {
+        clearScreen();
+        printMainBanner();
+        cout << ">>> Update Profile: " << profiles[currentIndex].name << "\n\n";
+        cout << "Current values:\n";
+        cout << " 1) Name           : " << profiles[currentIndex].name << '\n';
+        cout << " 2) Age            : " << profiles[currentIndex].age << '\n';
+        cout << " 3) Gender         : " << profiles[currentIndex].gender << '\n';
+        cout << " 4) Height (cm)    : " << profiles[currentIndex].heightCm << '\n';
+        cout << " 5) Weight (kg)    : " << profiles[currentIndex].weightKg << '\n';
+        cout << " 6) Goal           : " << profiles[currentIndex].goal << '\n';
+        cout << " 7) Diet Preference: " << profiles[currentIndex].dietPreference << '\n';
+        cout << " 0) Back to previous menu\n";
+        cout << "-----------------------------------------------------\n";
+
+        int choice = getIntInRange("Select field to update (0-7): ", 0, 7);
+        if (choice == 0) {
+            done = true;
+            break;
+        }
+
+        switch (choice) {
+            case 1: {
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Enter new name: ";
+                getline(cin, profiles[currentIndex].name);
+                break;
+            }
+            case 2: {
+                profiles[currentIndex].age =
+                    getIntInRange("Enter new age (10-100): ", 10, 100);
+                break;
+            }
+            case 3: {
+                profiles[currentIndex].gender =
+                    getCharFromOptions("Enter new gender (M/F): ", "MmFf");
+                break;
+            }
+            case 4: {
+                profiles[currentIndex].heightCm =
+                    getFloatInRange("Enter new height (100-250 cm): ", 100.0f, 250.0f);
+                break;
+            }
+            case 5: {
+                profiles[currentIndex].weightKg =
+                    getFloatInRange("Enter new weight (30-250 kg): ", 30.0f, 250.0f);
+                break;
+            }
+            case 6: {
+                cout << "\nChoose new goal:\n";
+                cout << " 1) lose\n";
+                cout << " 2) maintain\n";
+                cout << " 3) gain\n";
+                cout << " 4) strength\n";
+                cout << " 5) stamina\n";
+                int g = getIntInRange("Enter choice (1-5): ", 1, 5);
+                if      (g == 1) profiles[currentIndex].goal = "lose";
+                else if (g == 2) profiles[currentIndex].goal = "maintain";
+                else if (g == 3) profiles[currentIndex].goal = "gain";
+                else if (g == 4) profiles[currentIndex].goal = "strength";
+                else             profiles[currentIndex].goal = "stamina";
+                break;
+            }
+            case 7: {
+                cout << "\nDiet preference:\n";
+                cout << " 1) veg\n";
+                cout << " 2) non-veg\n";
+                int d = getIntInRange("Enter choice (1-2): ", 1, 2);
+                profiles[currentIndex].dietPreference = (d == 1 ? "veg" : "non-veg");
+                break;
+            }
+        }
+
+        saveAllProfiles(profiles, count);
+        playBeep();
+        cout << "\nField updated successfully.\n";
+        pauseScreen();
+    }
 }
 
 // ===================== BMI =====================
@@ -305,25 +451,18 @@ void generateWorkoutPlan(const UserProfile &user) {
     printMainBanner();
 
     cout << ">>> Personalized Workout Planner\n\n";
-    cout << "We will ask a few quick questions.\n\n";
-
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     string goal = user.goal;
-    char change;
-    cout << "Use profile goal '" << user.goal << "'? (y/n): ";
-    cin >> change;
+    char change = getYesNo("Use profile goal '" + user.goal + "'? (y/n): ");
 
-    if (change == 'n' || change == 'N') {
+    if (change == 'n') {
         cout << "\nChoose goal:\n";
         cout << " 1) lose\n";
         cout << " 2) maintain\n";
         cout << " 3) gain\n";
         cout << " 4) strength\n";
         cout << " 5) stamina\n";
-        cout << "Enter choice: ";
-        int g;
-        cin >> g;
+        int g = getIntInRange("Enter choice (1-5): ", 1, 5);
         if      (g == 1) goal = "lose";
         else if (g == 2) goal = "maintain";
         else if (g == 3) goal = "gain";
@@ -331,27 +470,16 @@ void generateWorkoutPlan(const UserProfile &user) {
         else             goal = "stamina";
     }
 
-    int dailyMinutes;
-    int daysPerWeek;
-    int difficulty;
+    int dailyMinutes = getIntInRange(
+        "\nHow many minutes can you give per workout day (10-180)? ", 10, 180);
+    int daysPerWeek = getIntInRange(
+        "How many days can you work out per week (1-7)? ", 1, 7);
 
-    cout << "\nHow many minutes can you give per workout day? ";
-    cin >> dailyMinutes;
-
-    cout << "How many days can you work out per week? ";
-    cin >> daysPerWeek;
-
-    do{
-        cout << "\nChoose difficulty level:\n";
-        cout << " 1) Beginner\n";
-        cout << " 2) Intermediate\n";
-        cout << " 3) Advanced\n";
-        cout << "Enter choice: ";
-        cin >> difficulty;
-        if(difficulty < 1 || difficulty > 3){
-            cout << "Invalid choice. Please select between 1 and 3.\n";
-        }
-    }while(difficulty < 1 || difficulty > 3);
+    cout << "\nChoose difficulty level:\n";
+    cout << " 1) Beginner\n";
+    cout << " 2) Intermediate\n";
+    cout << " 3) Advanced\n";
+    int difficulty = getIntInRange("Enter choice (1-3): ", 1, 3);
 
     clearScreen();
     printMainBanner();
@@ -360,60 +488,125 @@ void generateWorkoutPlan(const UserProfile &user) {
     cout << "Time commitment: " << dailyMinutes << " min/day, "
          << daysPerWeek << " days/week\n\n";
 
-    // Simple ASCII layout: Day-wise plan
     string days[7] = {"Monday", "Tuesday", "Wednesday", "Thursday",
                       "Friday", "Saturday", "Sunday"};
 
     for (int d = 0; d < daysPerWeek && d < 7; d++) {
         cout << "---------------- " << days[d] << " ----------------\n";
 
-        if (goal == "lose") {
-            if (difficulty == 1) {
-                cout << "  * 10 min brisk walk\n";
-                cout << "  * 10 min light bodyweight circuit\n";
-                cout << "  * 5 min stretching\n";
-            } else if (difficulty == 2) {
-                cout << "  * 15 min jogging\n";
-                cout << "  * 3 x 12 squats + lunges\n";
-                cout << "  * 3 x 20 sec plank\n";
-            } else {
-                cout << "  * 20 min interval running (1 min fast / 1 min slow)\n";
-                cout << "  * 4 x 15 burpees / jump squats\n";
-                cout << "  * 10 min core circuit\n";
+        if (goal == "gain" || goal == "strength") {
+            int splitDay = d % 5; // chest, back, legs, shoulders, arms
+
+            if (splitDay == 0) { // Chest day
+                cout << " Focus: Chest & Triceps\n";
+                if (difficulty == 1) {
+                    cout << "  * Push-ups 3 x 8\n";
+                    cout << "  * Incline push-ups 3 x 10\n";
+                } else if (difficulty == 2) {
+                    cout << "  * Bench press 4 x 8\n";
+                    cout << "  * Incline dumbbell press 3 x 10\n";
+                    cout << "  * Tricep dips 3 x 10\n";
+                } else {
+                    cout << "  * Heavy bench press 5 x 5\n";
+                    cout << "  * Weighted dips 4 x 8\n";
+                    cout << "  * Close-grip bench press 4 x 8\n";
+                }
+            } else if (splitDay == 1) { // Back day
+                cout << " Focus: Back & Biceps\n";
+                if (difficulty == 1) {
+                    cout << "  * Dumbbell rows 3 x 10\n";
+                    cout << "  * Bicep curls 3 x 10\n";
+                } else if (difficulty == 2) {
+                    cout << "  * Pull-ups or lat pulldown 4 x 8\n";
+                    cout << "  * Barbell rows 4 x 8\n";
+                    cout << "  * Barbell curls 3 x 10\n";
+                } else {
+                    cout << "  * Weighted pull-ups 5 x 5\n";
+                    cout << "  * T-bar rows 4 x 8\n";
+                    cout << "  * Heavy curls 4 x 8\n";
+                }
+            } else if (splitDay == 2) { // Legs
+                cout << " Focus: Legs\n";
+                if (difficulty == 1) {
+                    cout << "  * Bodyweight squats 3 x 12\n";
+                    cout << "  * Lunges 3 x 10\n";
+                } else if (difficulty == 2) {
+                    cout << "  * Barbell squats 4 x 8\n";
+                    cout << "  * Romanian deadlift 4 x 8\n";
+                    cout << "  * Calf raises 3 x 15\n";
+                } else {
+                    cout << "  * Heavy squats 5 x 5\n";
+                    cout << "  * Deadlift 5 x 5\n";
+                    cout << "  * Walking lunges 4 x 12 steps\n";
+                }
+            } else if (splitDay == 3) { // Shoulders
+                cout << " Focus: Shoulders\n";
+                if (difficulty == 1) {
+                    cout << "  * Dumbbell shoulder press 3 x 10\n";
+                    cout << "  * Side raises 3 x 12\n";
+                } else if (difficulty == 2) {
+                    cout << "  * Barbell overhead press 4 x 8\n";
+                    cout << "  * Lateral raises 3 x 12\n";
+                    cout << "  * Rear delt flyes 3 x 12\n";
+                } else {
+                    cout << "  * Heavy overhead press 5 x 5\n";
+                    cout << "  * Upright rows 4 x 8\n";
+                    cout << "  * Superset lateral + front raises 3 x 12\n";
+                }
+            } else { // Arms / full upper
+                cout << " Focus: Arms & Accessory\n";
+                if (difficulty == 1) {
+                    cout << "  * Bicep curls 3 x 12\n";
+                    cout << "  * Tricep extensions 3 x 12\n";
+                } else if (difficulty == 2) {
+                    cout << "  * Close-grip bench press 4 x 8\n";
+                    cout << "  * EZ-bar curls 4 x 10\n";
+                    cout << "  * Forearm curls 3 x 12\n";
+                } else {
+                    cout << "  * Superset curls & skull crushers 4 x 10\n";
+                    cout << "  * Heavy dips 4 x 8\n";
+                    cout << "  * Grip work / farmer walks\n";
+                }
             }
-        } else if (goal == "gain" || goal == "strength") {
-            if (difficulty == 1) {
-                cout << "  * Push-ups 3 x 8\n";
-                cout << "  * Bodyweight squats 3 x 10\n";
-                cout << "  * Dumbbell rows 3 x 10 (if available)\n";
-            } else if (difficulty == 2) {
-                cout << "  * Bench press 4 x 8\n";
-                cout << "  * Squats 4 x 8\n";
-                cout << "  * Bent-over rows 4 x 8\n";
+
+        } else if (goal == "lose") {
+            // alternate cardio & circuits
+            int dayType = d % 3;
+            if (dayType == 0) {
+                cout << " Focus: Steady-state cardio\n";
+                cout << "  * Brisk walk or light jog " << dailyMinutes - 5 << " min\n";
+                cout << "  * 5 min stretching\n";
+            } else if (dayType == 1) {
+                cout << " Focus: Full-body circuit\n";
+                cout << "  * 3 rounds of:\n";
+                cout << "      - Squats 15 reps\n";
+                cout << "      - Push-ups 10 reps\n";
+                cout << "      - Mountain climbers 20 reps\n";
+                cout << "  * 5–10 min cool-down walk\n";
             } else {
-                cout << "  * Heavy compound lifts (5 x 5):\n";
-                cout << "      - Squat\n";
-                cout << "      - Bench press\n";
-                cout << "      - Deadlift\n";
-                cout << "  * Accessory strength: pull-ups / dips 4 x 8\n";
+                cout << " Focus: Intervals\n";
+                cout << "  * 1 min fast / 1 min slow (walk or jog) for "
+                     << dailyMinutes - 5 << " min\n";
+                cout << "  * 5 min stretching\n";
             }
         } else { // maintain / stamina
-            if (difficulty == 1) {
-                cout << "  * 15 min walk\n";
-                cout << "  * 10 min mobility (arm circles, hip circles)\n";
-            } else if (difficulty == 2) {
-                cout << "  * 20-25 min steady-state cardio (cycling, brisk walk)\n";
-                cout << "  * 3 x 12 push-ups + squats\n";
+            int dayType = d % 2;
+            if (dayType == 0) {
+                cout << " Focus: Cardio + light strength\n";
+                cout << "  * " << dailyMinutes - 10 << " min cycling / brisk walk\n";
+                cout << "  * 2 sets of push-ups + squats + plank\n";
             } else {
-                cout << "  * 30-40 min mixed cardio (jog + skipping)\n";
-                cout << "  * Short bodyweight circuit: 3 rounds\n";
+                cout << " Focus: Mobility & core\n";
+                cout << "  * 10–15 min dynamic stretching\n";
+                cout << "  * 3 sets of core exercises (plank, leg raises, dead bug)\n";
+                cout << "  * Easy walk to finish\n";
             }
         }
 
         cout << "----------------------------------------------\n\n";
     }
 
-    cout << "Tip: Always warm up 5-10 min and cool down 5 min.\n\n";
+    cout << "Tip: Always warm up 5–10 min and cool down 5 min.\n\n";
     playBeep();
     pauseScreen();
 }
@@ -436,13 +629,10 @@ void generateDietPlan(const UserProfile &user) {
          << user.goal << ")\n\n";
 
     string dietType = user.dietPreference;
-    char ch;
-    cout << "Use profile diet preference '" << dietType << "'? (y/n): ";
-    cin >> ch;
-    if (ch == 'n' || ch == 'N') {
-        cout << "Choose preference: 1) veg  2) non-veg: ";
-        int x;
-        cin >> x;
+    char ch = getYesNo("Use profile diet preference '" + dietType + "'? (y/n): ");
+    if (ch == 'n') {
+        cout << "Choose preference: 1) veg  2) non-veg\n";
+        int x = getIntInRange("Enter choice (1-2): ", 1, 2);
         dietType = (x == 1 ? "veg" : "non-veg");
     }
 
@@ -450,13 +640,10 @@ void generateDietPlan(const UserProfile &user) {
     printMainBanner();
     cout << ">>> Sample Day Diet Plan (" << dietType << ")\n\n";
 
-    // We create 2 choices per combo
     cout << "Choose plan variant:\n";
     cout << " 1) Balanced\n";
     cout << " 2) Higher protein\n";
-    cout << "Enter choice: ";
-    int variant;
-    cin >> variant;
+    int variant = getIntInRange("Enter choice (1-2): ", 1, 2);
 
     cout << "\n==============================================\n";
 
@@ -544,7 +731,7 @@ void generateDietPlan(const UserProfile &user) {
                           "Apple + handful of almonds",
                           "Protein ~6g, Carbs ~20g, Fats ~10g");
                 printMeal("Dinner",
-                          "Fish curry with vegetables (no heavy oil)",
+                          "Fish curry with vegetables (low oil)",
                           "Protein ~25g, Carbs ~20g, Fats ~8g");
             } else {
                 printMeal("Breakfast",
@@ -628,18 +815,16 @@ void addWorkoutLog() {
     cout << ">>> Add Daily Workout Log\n\n";
 
     WorkoutLog log;
-    cout << "Enter week number (1-52): ";
-    cin >> log.weekNumber;
+    log.weekNumber = getIntInRange("Enter week number (1-52): ", 1, 52);
+
     cout << "Enter date (YYYY-MM-DD): ";
     cin >> log.date;
+
     cout << "Enter exercise (one word, e.g. Running): ";
     cin >> log.exercise;
-    cout << "Enter duration (minutes): ";
-    cin >> log.durationMinutes;
 
-    int intensity;
-    cout << "Intensity (1=Light, 2=Moderate, 3=Intense): ";
-    cin >> intensity;
+    log.durationMinutes = getIntInRange("Enter duration (minutes, 5-300): ", 5, 300);
+    int intensity = getIntInRange("Intensity (1=Light, 2=Moderate, 3=Intense): ", 1, 3);
 
     log.caloriesBurned = estimateCalories(log.durationMinutes, intensity);
 
@@ -727,9 +912,7 @@ void showWeeklySummary() {
     printMainBanner();
 
     cout << ">>> Weekly Progress Summary\n\n";
-    cout << "Enter week number (1-52): ";
-    int week;
-    cin >> week;
+    int week = getIntInRange("Enter week number (1-52): ", 1, 52);
 
     WeeklySummary summary = computeWeeklySummary(week);
 
@@ -764,7 +947,6 @@ void showMenu() {
     cout << " 9) View weekly progress summary\n";
     cout << " 0) Exit\n";
     cout << "===================================================\n";
-    cout << "Enter your choice: ";
 }
 
 int main() {
@@ -774,7 +956,7 @@ int main() {
     int profileCount = loadAllProfiles(profiles, MAX_PROFILES);
     int currentProfileIndex = -1;
 
-    // Choose or create profile at start
+    // Choose or create profile at start (optional)
     if (profileCount > 0) {
         clearScreen();
         printMainBanner();
@@ -807,7 +989,7 @@ int main() {
         }
 
         showMenu();
-        cin >> choice;
+        choice = getIntInRange("Enter your choice (0-9): ", 0, 9);
 
         switch (choice) {
             case 1:
@@ -885,12 +1067,9 @@ int main() {
                 break;
             case 0:
                 clearScreen();
-                cout << "Thanks for using GitFit. Stay strong! 💪\n";
+                cout << "Thanks for using GitFit. Stay strong!\n";
                 playBeep();
                 break;
-            default:
-                cout << "Invalid choice. Please try again.\n";
-                pauseScreen();
         }
 
     } while (choice != 0);
