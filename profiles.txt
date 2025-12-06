@@ -1,0 +1,3 @@
+Mazhar Mohyudin|19|M|170|70|gain|non-veg
+Usman|20|M|190|80|stamina|non-veg
+ABDULLAH|19|M|179|60|gain|non-veg
