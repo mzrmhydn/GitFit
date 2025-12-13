@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <string>   
+#include <string>
 #include <cstdlib>   // system("cls")
 #include <ctime>
 #include <limits>    // numeric_limits
 #include <algorithm> // std::max
 #include <cctype>    // tolower
+#include <vector>
 
 using namespace std;
 
@@ -23,8 +24,8 @@ struct UserProfile {
 };
 
 struct WorkoutLog {
+    string profileName;   // identify which profile the log belongs to
     int weekNumber;
-    string date;
     string exercise;
     int durationMinutes;
     int caloriesBurned;
@@ -43,12 +44,65 @@ const string WORKOUT_LOG_FILE = "workout_log.txt";
 const int    MAX_PROFILES     = 100;
 
 // Simple ANSI color codes (VS Code terminal / Git Bash etc.)
+const string COL_LOCKED = "\033[38;2;150;150;150m"; // RGB grey for locked items
 const string COL_RESET  = "\033[0m";
 const string COL_TITLE  = "\033[1;36m";  // bright cyan
 const string COL_MENU   = "\033[1;33m";  // yellow
 const string COL_OK     = "\033[1;32m";  // green
 const string COL_WARN   = "\033[1;31m";  // red
 const string COL_MUTED  = "\033[2;37m";  // grey
+
+// ---------- Exercise Lists (for selection in Add Workout Log) ----------
+
+const string CARDIO_EXERCISES[] = {
+    "Walking (light)",
+    "Brisk walking",
+    "Jogging",
+    "Running",
+    "Cycling (outdoor)",
+    "Stationary bike",
+    "Treadmill run",
+    "Elliptical trainer",
+    "Swimming (easy)",
+    "Swimming (laps)",
+    "Skipping rope",
+    "Stair climbing",
+    "Rowing machine",
+    "Aerobic dance / Zumba",
+    "HIIT cardio circuit"
+};
+const int NUM_CARDIO_EXERCISES =
+    sizeof(CARDIO_EXERCISES) / sizeof(CARDIO_EXERCISES[0]);
+
+const string STRENGTH_EXERCISES[] = {
+    "Push-ups",
+    "Bench press",
+    "Incline dumbbell press",
+    "Pull-ups / Lat pulldown",
+    "Barbell rows",
+    "Deadlift",
+    "Barbell squats",
+    "Leg press",
+    "Lunges",
+    "Shoulder press",
+    "Dumbbell shoulder press",
+    "Bicep curls",
+    "Tricep dips",
+    "Plank + core circuit",
+    "Kettlebell swings",
+    "Hip thrusts / glute bridge"
+};
+const int NUM_STRENGTH_EXERCISES =
+    sizeof(STRENGTH_EXERCISES) / sizeof(STRENGTH_EXERCISES[0]);
+
+const string OTHER_EXERCISES[] = {
+    "Mixed full-body circuit",
+    "Sports (football/cricket/basketball)",
+    "Yoga / mobility",
+    "Home chores workout"
+};
+const int NUM_OTHER_EXERCISES =
+    sizeof(OTHER_EXERCISES) / sizeof(OTHER_EXERCISES[0]);
 
 // ===================== UTILS / UI =====================
 
@@ -257,6 +311,43 @@ int chooseProfileIndex(UserProfile profiles[], int count) {
     return choice - 1;
 }
 
+// Delete all workout logs for a given profile
+void deleteWorkoutLogsForProfile(const string &profileName) {
+    ifstream in(WORKOUT_LOG_FILE.c_str());
+    if (!in) {
+        // No log file yet, nothing to do
+        return;
+    }
+
+    vector<string> keptLines;
+    string line;
+
+    while (getline(in, line)) {
+        if (line.empty()) continue;
+
+        stringstream ss(line);
+        string nameToken;
+        getline(ss, nameToken, '|'); // profileName is first field
+
+        if (nameToken != profileName) {
+            keptLines.push_back(line);
+        }
+    }
+    in.close();
+
+    ofstream out(WORKOUT_LOG_FILE.c_str());
+    if (!out) {
+        cout << COL_WARN << "Warning: Could not rewrite workout log file.\n"
+             << COL_RESET;
+        return;
+    }
+
+    for (size_t i = 0; i < keptLines.size(); ++i) {
+        out << keptLines[i] << '\n';
+    }
+    out.close();
+}
+
 // --------- CREATE PROFILE ---------
 
 void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
@@ -424,6 +515,58 @@ void updateCurrentProfile(UserProfile profiles[], int count, int currentIndex) {
         cout << COL_OK << "\nField updated successfully.\n" << COL_RESET;
         pauseScreen();
     }
+}
+
+// --------- DELETE CURRENT PROFILE (and its logs) ---------
+
+void deleteCurrentProfile(UserProfile profiles[], int &count, int &currentIndex) {
+    if (currentIndex < 0 || currentIndex >= count) {
+        cout << COL_WARN << "No active profile to delete.\n" << COL_RESET;
+        pauseScreen();
+        return;
+    }
+
+    clearScreen();
+    printMainBanner();
+
+    cout << COL_TITLE << ">>> Delete Active Profile\n\n" << COL_RESET;
+    cout << COL_WARN
+         << "Warning: This will permanently delete profile '"
+         << profiles[currentIndex].name
+         << "' and all of its workout logs.\n"
+         << COL_RESET;
+
+    char confirm = getYesNo("Are you sure you want to continue? (y/n): ");
+    if (confirm != 'y') {
+        cout << "\nDeletion cancelled.\n";
+        pauseScreen();
+        return;
+    }
+
+    string deletedName = profiles[currentIndex].name;
+
+    // Shift profiles left to fill the gap
+    for (int i = currentIndex; i < count - 1; ++i) {
+        profiles[i] = profiles[i + 1];
+    }
+    count--;
+
+    saveAllProfiles(profiles, count);
+    deleteWorkoutLogsForProfile(deletedName);
+
+    if (count == 0) {
+        currentIndex = -1;
+        cout << COL_WARN << "\nProfile deleted. No profiles left.\n" << COL_RESET;
+    } else {
+        if (currentIndex >= count) {
+            currentIndex = count - 1;
+        }
+        cout << COL_OK << "\nProfile deleted. Active profile is now: "
+             << profiles[currentIndex].name << "\n" << COL_RESET;
+    }
+
+    playBeep();
+    pauseScreen();
 }
 
 // ===================== BMI =====================
@@ -833,16 +976,30 @@ int estimateCardioCalories(const string &exercise, int durationMinutes, int inte
 
     int basePerMin = 6; // default moderate
 
-    if (e == "walk" || e == "walking")
+    if (e.find("walk") != string::npos)
         basePerMin = 4;
-    else if (e == "run" || e == "running" || e == "jog" || e == "jogging")
+    else if (e.find("jog") != string::npos)
+        basePerMin = 7;
+    else if (e.find("run") != string::npos)
         basePerMin = 10;
-    else if (e == "cycle" || e == "cycling" || e == "bike" || e == "biking")
+    else if (e.find("cycle") != string::npos || e.find("bike") != string::npos)
         basePerMin = 8;
-    else if (e == "swim" || e == "swimming")
+    else if (e.find("swim") != string::npos)
         basePerMin = 9;
-    else if (e == "hiit")
+    else if (e.find("elliptical") != string::npos)
+        basePerMin = 8;
+    else if (e.find("row") != string::npos)
+        basePerMin = 9;
+    else if (e.find("stair") != string::npos)
+        basePerMin = 8;
+    else if (e.find("rope") != string::npos)
+        basePerMin = 10;
+    else if (e.find("hiit") != string::npos)
         basePerMin = 11;
+    else if (e.find("dance") != string::npos || e.find("zumba") != string::npos)
+        basePerMin = 7;
+    else if (e.find("sport") != string::npos)
+        basePerMin = 8;
 
     // adjust by intensity
     if (intensityLevel == 1)      basePerMin -= 2;  // easy
@@ -876,38 +1033,63 @@ int estimateStrengthCalories(const string &exercise, int sets, int repsPerSet, i
     return calories;
 }
 
-void addWorkoutLog() {
+void addWorkoutLog(const UserProfile &user) {
     clearScreen();
     printMainBanner();
 
     cout << COL_TITLE << ">>> Add Daily Workout Log\n\n" << COL_RESET;
-    cout << "This section lets you record one workout for a specific day.\n";
-    cout << "You can log either cardio (with duration) or strength (with sets & reps).\n\n";
+    cout << "This section lets you record one workout for a specific week.\n";
+    cout << "Pick the type of workout, then choose an exercise from the list.\n\n";
 
     WorkoutLog log;
+    log.profileName = user.name;  // bind log to current profile
     log.weekNumber = getIntInRange(
         "Enter week number for this workout (1-52): ", 1, 52);
-
-    cout << "\nEnter date for this workout (YYYY-MM-DD, e.g. 2025-12-13): ";
-    cin >> log.date;
 
     cout << "\nWhat type of workout did you do today?\n";
     cout << " 1) Cardio (walking, running, cycling, treadmill, etc.)\n";
     cout << " 2) Strength / weights (push-ups, squats, bench press, etc.)\n";
-    cout << " 3) Other / mixed (we'll treat it like light cardio)\n";
+    cout << " 3) Other / mixed (sports, yoga, mixed circuits)\n";
     int workoutType = getIntInRange("Choose workout type (1-3): ", 1, 3);
 
-    // Consume leftover newline so getline works correctly
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    string baseExerciseName;
 
-    cout << "\nEnter a short name for the exercise:\n";
-    cout << " > ";
-    getline(cin, log.exercise);
+    if (workoutType == 1) {
+        cout << "\nSelect a CARDIO exercise from the list:\n";
+        for (int i = 0; i < NUM_CARDIO_EXERCISES; ++i) {
+            cout << " " << (i + 1) << ") " << CARDIO_EXERCISES[i] << "\n";
+        }
+        int exChoice = getIntInRange(
+            "Enter your choice (1-" + to_string(NUM_CARDIO_EXERCISES) + "): ",
+            1, NUM_CARDIO_EXERCISES
+        );
+        baseExerciseName = CARDIO_EXERCISES[exChoice - 1];
+    } else if (workoutType == 2) {
+        cout << "\nSelect a STRENGTH exercise from the list:\n";
+        for (int i = 0; i < NUM_STRENGTH_EXERCISES; ++i) {
+            cout << " " << (i + 1) << ") " << STRENGTH_EXERCISES[i] << "\n";
+        }
+        int exChoice = getIntInRange(
+            "Enter your choice (1-" + to_string(NUM_STRENGTH_EXERCISES) + "): ",
+            1, NUM_STRENGTH_EXERCISES
+        );
+        baseExerciseName = STRENGTH_EXERCISES[exChoice - 1];
+    } else { // Other / mixed
+        cout << "\nSelect the option that best matches your workout:\n";
+        for (int i = 0; i < NUM_OTHER_EXERCISES; ++i) {
+            cout << " " << (i + 1) << ") " << OTHER_EXERCISES[i] << "\n";
+        }
+        int exChoice = getIntInRange(
+            "Enter your choice (1-" + to_string(NUM_OTHER_EXERCISES) + "): ",
+            1, NUM_OTHER_EXERCISES
+        );
+        baseExerciseName = OTHER_EXERCISES[exChoice - 1];
+    }
 
     cout << "\nRate how hard this session felt:\n";
-    cout << " 1) Easy    (you could talk comfortably)\n";
-    cout << " 2) Moderate(you were working but okay)\n";
-    cout << " 3) Hard    (really challenging)\n";
+    cout << " 1) Easy\n";
+    cout << " 2) Moderate\n";
+    cout << " 3) Hard\n";
     int intensity = getIntInRange("Intensity (1-3): ", 1, 3);
 
     if (workoutType == 1 || workoutType == 3) {
@@ -915,6 +1097,7 @@ void addWorkoutLog() {
         cout << "\nEnter duration of the cardio part in minutes (5-300): ";
         log.durationMinutes = getIntInRange("", 5, 300);
 
+        log.exercise = baseExerciseName;
         log.caloriesBurned = estimateCardioCalories(
             log.exercise,
             log.durationMinutes,
@@ -936,6 +1119,7 @@ void addWorkoutLog() {
         // ~2 minutes per set (including rest), with a minimum of 5 minutes
         log.durationMinutes = std::max(5, sets * 2);
 
+        log.exercise = baseExerciseName;
         log.caloriesBurned = estimateStrengthCalories(
             log.exercise,
             sets,
@@ -958,9 +1142,9 @@ void addWorkoutLog() {
         return;
     }
 
-    // File format stays the same: week|date|exercise|minutes|calories
-    out << log.weekNumber << '|'
-        << log.date << '|'
+    // File format: profileName|week|exercise|minutes|calories
+    out << log.profileName << '|'
+        << log.weekNumber << '|'
         << log.exercise << '|'
         << log.durationMinutes << '|'
         << log.caloriesBurned << '\n';
@@ -968,6 +1152,8 @@ void addWorkoutLog() {
     out.close();
 
     cout << COL_OK << "\nWorkout logged successfully!\n" << COL_RESET;
+    cout << " Profile           : " << log.profileName    << "\n";
+    cout << " Exercise          : " << log.exercise        << "\n";
     cout << " Estimated time    : " << log.durationMinutes << " minutes\n";
     cout << " Estimated calories: " << log.caloriesBurned  << " kcal\n\n";
 
@@ -975,7 +1161,7 @@ void addWorkoutLog() {
     pauseScreen();
 }
 
-WeeklySummary computeWeeklySummary(int selectedWeek) {
+WeeklySummary computeWeeklySummary(const UserProfile &user, int selectedWeek) {
     WeeklySummary summary;
     summary.totalMinutes  = 0;
     summary.totalCalories = 0;
@@ -988,23 +1174,83 @@ WeeklySummary computeWeeklySummary(int selectedWeek) {
     while (getline(in, line)) {
         if (line.empty()) continue;
         stringstream ss(line);
-        string token;
         WorkoutLog log;
+        string token;
 
+        // profileName
+        getline(ss, log.profileName, '|');
+        if (log.profileName != user.name) {
+            // log belongs to some other profile
+            continue;
+        }
+
+        // weekNumber
         getline(ss, token, '|');
         log.weekNumber = atoi(token.c_str());
         if (log.weekNumber != selectedWeek) continue;
 
-        getline(ss, log.date, '|');
+        // exercise
         getline(ss, log.exercise, '|');
+
+        // durationMinutes
         getline(ss, token, '|');
         log.durationMinutes = atoi(token.c_str());
+
+        // caloriesBurned
         getline(ss, token, '|');
         log.caloriesBurned = atoi(token.c_str());
 
         summary.totalMinutes  += log.durationMinutes;
         summary.totalCalories += log.caloriesBurned;
         summary.daysLogged++;
+    }
+
+    in.close();
+    return summary;
+}
+
+// Overall summary across all weeks
+WeeklySummary computeOverallSummary(const UserProfile &user) {
+    WeeklySummary summary;
+    summary.totalMinutes  = 0;
+    summary.totalCalories = 0;
+    summary.daysLogged    = 0;
+
+    ifstream in(WORKOUT_LOG_FILE.c_str());
+    if (!in) return summary;
+
+    string line;
+    while (getline(in, line)) {
+        if (line.empty()) continue;
+
+        stringstream ss(line);
+        WorkoutLog log;
+        string token;
+
+        // profileName
+        getline(ss, log.profileName, '|');
+        if (log.profileName != user.name) {
+            continue;
+        }
+
+        // weekNumber (ignored, but consumed)
+        getline(ss, token, '|');
+        log.weekNumber = atoi(token.c_str());
+
+        // exercise
+        getline(ss, log.exercise, '|');
+
+        // durationMinutes
+        getline(ss, token, '|');
+        log.durationMinutes = atoi(token.c_str());
+
+        // caloriesBurned
+        getline(ss, token, '|');
+        log.caloriesBurned = atoi(token.c_str());
+
+        summary.totalMinutes  += log.durationMinutes;
+        summary.totalCalories += log.caloriesBurned;
+        summary.daysLogged++;   // assume one log = one workout day
     }
 
     in.close();
@@ -1033,21 +1279,6 @@ void showAchievements(const WeeklySummary &summary) {
     cout << '\n';
 }
 
-// ASCII bar for charts
-void drawBar(const string &label, int value, int maxValue) {
-    if (maxValue <= 0) maxValue = 1;
-    int width  = 30; // bar width
-    int filled = (value * width) / maxValue;
-
-    cout << " " << label << " ";
-    cout << "[";
-    for (int i = 0; i < width; i++) {
-        if (i < filled) cout << "#";
-        else cout << "-";
-    }
-    cout << "] " << value << "\n";
-}
-
 // XP + level system
 int calculateXP(const WeeklySummary &s) {
     int xp = 0;
@@ -1065,34 +1296,30 @@ string levelTitle(int level) {
     return "Beast Mode";
 }
 
-void showWeeklySummary() {
+void showWeeklySummary(const UserProfile &user) {
     clearScreen();
     printMainBanner();
 
     cout << COL_TITLE << ">>> Weekly Progress Summary\n\n" << COL_RESET;
-    cout << "You will see your total minutes, calories and a small bar chart\n";
-    cout << "for the week you choose.\n\n";
+    cout << "You will see your total minutes, calories, and badges\n";
+    cout << "for the week you choose (only for your profile).\n\n";
 
     int week = getIntInRange("Enter week number (1-52): ", 1, 52);
 
-    WeeklySummary summary = computeWeeklySummary(week);
+    WeeklySummary summary = computeWeeklySummary(user, week);
 
     if (summary.daysLogged == 0) {
-        cout << COL_WARN << "\nNo logs found for this week.\n" << COL_RESET;
+        cout << COL_WARN << "\nNo logs found for this week for profile '"
+             << user.name << "'.\n" << COL_RESET;
         pauseScreen();
         return;
     }
 
-    cout << "\nWeek " << week << " summary:\n";
+    cout << "\nProfile: " << user.name << "\n";
+    cout << "Week " << week << " summary:\n";
     cout << " Days logged    : " << summary.daysLogged << '\n';
-    cout << " Total minutes  : " << summary.totalMinutes << '\n';
-    cout << " Total calories : " << summary.totalCalories << '\n';
-
-    // Visual summary
-    cout << "\n" << COL_MENU << "Visual summary:\n" << COL_RESET;
-    int maxVal = std::max(summary.totalMinutes, summary.totalCalories);
-    drawBar("Minutes ", summary.totalMinutes, maxVal);
-    drawBar("Calories", summary.totalCalories, maxVal);
+    cout << " Total minutes  : " << summary.totalMinutes << "\n";
+    cout << " Total calories : " << summary.totalCalories << "\n";
 
     showAchievements(summary);
 
@@ -1108,13 +1335,82 @@ void showWeeklySummary() {
     pauseScreen();
 }
 
+// Achievements screen (all-time)
+void showAchievementsScreen(const UserProfile &user) {
+    clearScreen();
+    printMainBanner();
+
+    cout << COL_TITLE << ">>> Achievements & Progress\n\n" << COL_RESET;
+
+    WeeklySummary total = computeOverallSummary(user);
+
+    if (total.daysLogged == 0) {
+        cout << COL_WARN << "No workouts logged yet for profile '"
+             << user.name << "'.\n" << COL_RESET;
+        cout << "Log some workouts to start unlocking achievements!\n\n";
+        playBeep();
+        pauseScreen();
+        return;
+    }
+
+    cout << "Profile: " << user.name << "\n";
+    cout << "Total workouts logged : " << total.daysLogged    << "\n";
+    cout << "Total minutes trained  : " << total.totalMinutes << "\n";
+    cout << "Total calories burned  : " << total.totalCalories<< "\n\n";
+
+    const int REQ_DAYS     = 5;
+    const int REQ_MINUTES  = 300;
+    const int REQ_CALORIES = 2000;
+
+    bool consistencyUnlocked = (total.daysLogged    >= REQ_DAYS);
+    bool enduranceUnlocked   = (total.totalMinutes  >= REQ_MINUTES);
+    bool calorieUnlocked     = (total.totalCalories >= REQ_CALORIES);
+
+    cout << COL_MENU << "Achievement List\n" << COL_RESET;
+
+    // Consistency Star
+    cout << (consistencyUnlocked ? "" : COL_LOCKED);
+    cout << "\n- Consistency Star (Log workouts on 5 days)\n";
+    cout << "  Status  : " << (consistencyUnlocked ? "Unlocked ✔" : "Locked ✖") << "\n";
+    cout << "  Progress: " << total.daysLogged << "/" << REQ_DAYS << " days\n";
+    cout << COL_RESET;
+    
+    // Endurance Hero
+    cout << (enduranceUnlocked ? "" : COL_LOCKED);
+    cout << "\n- Endurance Hero (Accumulate 300 minutes of training)\n";
+    cout << "  Status  : " << (enduranceUnlocked ? "Unlocked ✔" : "Locked ✖") << "\n";
+    cout << "  Progress: " << total.totalMinutes << "/" << REQ_MINUTES << " min\n";
+    cout << COL_RESET;
+    
+    // Calorie Crusher
+    cout << (calorieUnlocked ? "" : COL_LOCKED);
+    cout << "\n- Calorie Crusher (Burn 2000 total calories)\n";
+    cout << "  Status  : " << (calorieUnlocked ? "Unlocked ✔" : "Locked ✖") << "\n";
+    cout << "  Progress: " << total.totalCalories << "/" << REQ_CALORIES << " kcal\n";
+    cout << COL_RESET;
+
+    // XP + Level (overall)
+    int xp    = calculateXP(total);
+    int level = 1 + xp / 500;
+    int nextLevelXP = level * 500;         // threshold for next level
+    int xpToNext    = std::max(0, nextLevelXP - xp);
+
+    cout << COL_OK << "\nOverall Progress:\n" << COL_RESET;
+    cout << " Current XP       : " << xp << "\n";
+    cout << " Current level    : " << level
+         << " (" << levelTitle(level) << ")\n";
+    cout << " XP to next level : " << xpToNext << "\n\n";
+
+    playBeep();
+    pauseScreen();
+}
+
 // ===================== MENU & MAIN =====================
 
 void showMenu() {
     cout << COL_MENU;
     cout << "==================== MAIN MENU ====================\n";
     cout << "Type the number of an option and press Enter.\n";
-    cout << "If you're new, start from 1) Create new profile.\n\n";
     cout << " 1) Create new profile      (set up your details)\n";
     cout << " 2) Switch active profile   (change user)\n";
     cout << " 3) View active profile     (see your info)\n";
@@ -1123,7 +1419,9 @@ void showMenu() {
     cout << " 6) Generate workout plan   (weekly exercise guide)\n";
     cout << " 7) Generate diet plan      (daily sample meals)\n";
     cout << " 8) Add daily workout log   (record what you did)\n";
-    cout << " 9) View weekly summary     (see progress & graphs)\n";
+    cout << " 9) View weekly summary     (see progress & badges)\n";
+    cout << "10) Delete active profile   (remove profile + logs)\n";
+    cout << "11) Achievements            (badges, XP & progress)\n";
     cout << " 0) Exit                    (close GitFit)\n";
     cout << "===================================================\n";
     cout << COL_RESET;
@@ -1172,7 +1470,7 @@ int main() {
         }
 
         showMenu();
-        choice = getIntInRange("Enter your choice (0-9): ", 0, 9);
+        choice = getIntInRange("Enter your choice (0-11): ", 0, 11);
 
         switch (choice) {
             case 1:
@@ -1244,7 +1542,7 @@ int main() {
                 break;
             case 8:
                 if (currentProfileIndex >= 0)
-                    addWorkoutLog();
+                    addWorkoutLog(profiles[currentProfileIndex]);
                 else {
                     cout << COL_WARN
                          << "Please create or select a profile first (option 1 or 2).\n"
@@ -1254,7 +1552,27 @@ int main() {
                 break;
             case 9:
                 if (currentProfileIndex >= 0)
-                    showWeeklySummary();
+                    showWeeklySummary(profiles[currentProfileIndex]);
+                else {
+                    cout << COL_WARN
+                         << "Please create or select a profile first (option 1 or 2).\n"
+                         << COL_RESET;
+                    pauseScreen();
+                }
+                break;
+            case 10:
+                if (currentProfileIndex >= 0)
+                    deleteCurrentProfile(profiles, profileCount, currentProfileIndex);
+                else {
+                    cout << COL_WARN
+                         << "Please create or select a profile first (option 1 or 2).\n"
+                         << COL_RESET;
+                    pauseScreen();
+                }
+                break;
+            case 11:
+                if (currentProfileIndex >= 0)
+                    showAchievementsScreen(profiles[currentProfileIndex]);
                 else {
                     cout << COL_WARN
                          << "Please create or select a profile first (option 1 or 2).\n"

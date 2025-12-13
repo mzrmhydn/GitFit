@@ -1,4 +1,2 @@
-Mazhar Mohyudin|19|M|170|70|gain|non-veg
-Usman|20|M|190|80|stamina|non-veg
-ABDULLAH|19|M|179|60|gain|non-veg
-saad|19|M|170|50|gain|non-veg
+Mazhar|19|M|170|67|gain|non-veg
+Abdullah|19|M|175|65|gain|non-veg
