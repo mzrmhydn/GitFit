@@ -1,2 +1,4 @@
 Mazhar|19|M|170|67|gain|non-veg
 Abdullah|19|M|175|65|gain|non-veg
+Usman |40|M|180|80|gain|non-veg
+Saad|60|M|170|75|gain|non-veg
