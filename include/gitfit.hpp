@@ -7,7 +7,6 @@
 #include <sstream>
 #include <string>
 #include <cstdlib>   // system("cls")
-#include <ctime>
 #include <limits>    // numeric_limits
 #include <algorithm> // std::max
 #include <cctype>    // tolower
