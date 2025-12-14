@@ -15,7 +15,7 @@
 
 using namespace std;
 
-// ===================== DATA STRUCTURES =====================
+// DATA STRUCTURES
 
 struct UserProfile {
     string name;
@@ -41,7 +41,7 @@ struct WeeklySummary {
     int daysLogged;
 };
 
-// ===================== CONSTANTS DECLARATIONS =====================
+// CONSTANTS DECLARATIONS
 
 extern const string PROFILES_FILE;      // multiple profiles
 extern const string WORKOUT_LOG_FILE;
@@ -56,7 +56,7 @@ extern const string COL_OK;     // green
 extern const string COL_WARN;   // red
 extern const string COL_MUTED;  // grey
 
-// ===================== UTILS / UI =====================
+// UTILS / UI 
 
 void clearScreen();
 void pauseScreen();
@@ -71,7 +71,7 @@ char  getYesNo(const string &prompt);
 // string helpers
 string toLowerString(string s);
 
-// ===================== PROFILE HANDLING =====================
+// PROFILE HANDLING 
 
 int  loadAllProfiles(UserProfile profiles[], int maxProfiles);
 void saveAllProfiles(UserProfile profiles[], int count);
@@ -84,24 +84,24 @@ void viewProfile(const UserProfile &user);
 void updateCurrentProfile(UserProfile profiles[], int count, int currentIndex);
 void deleteCurrentProfile(UserProfile profiles[], int &count, int &currentIndex);
 
-// ===================== BMI =====================
+// BMI 
 
 float  calculateBMI(const UserProfile &user);
 string interpretBMI(float bmi);
 void   showBMI(const UserProfile &user);
 
-// ===================== WORKOUT PLAN =====================
+// WORKOUT PLAN 
 
 void generateWorkoutPlan(const UserProfile &user);
 
-// ===================== DIET PLAN =====================
+// DIET PLAN 
 
 void printMeal(const string &title,
                const string &foods,
                const string &nutrients);
 void generateDietPlan(const UserProfile &user);
 
-// ===================== WORKOUT LOG & SUMMARY =====================
+// WORKOUT LOG & SUMMARY 
 
 int estimateCardioCalories(const string &exercise, int durationMinutes, int intensityLevel);
 int estimateStrengthCalories(const string &exercise, int sets, int repsPerSet, int intensityLevel);

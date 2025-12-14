@@ -1,6 +1,6 @@
 #include "gitfit.hpp"
 
-// ===================== WORKOUT PLAN =====================
+//  WORKOUT PLAN 
 
 void generateWorkoutPlan(const UserProfile &user) {
     clearScreen();
@@ -33,7 +33,7 @@ void generateWorkoutPlan(const UserProfile &user) {
     int daysPerWeek = getIntInRange(
         "How many days can you work out per week (1-7)? ", 1, 7);
 
-    // ---------- Age-based recommendation ----------
+    // Age-based recommendation 
     int ageDifficulty = 2; // default moderate
 
     if (user.age >= 15 && user.age <= 30) {
@@ -62,7 +62,7 @@ void generateWorkoutPlan(const UserProfile &user) {
     cout << "\n";
 
     int difficulty = getIntInRange("Enter choice (1-3): ", 1, 3);
-    // ----------------------------------------------
+    //_________________
 
     clearScreen();
     printMainBanner();

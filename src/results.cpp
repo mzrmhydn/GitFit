@@ -4,7 +4,7 @@
 
 // CARDIO_EXERCISES, STRENGTH_EXERCISES, OTHER_EXERCISES arrays + counts
 
-// ---------- Exercise Lists (for selection in Add Workout Log) ----------
+// Exercise Lists (for selection in Add Workout Log) 
 
 const string CARDIO_EXERCISES[] = {
     "Walking (light)",
@@ -57,7 +57,7 @@ const int NUM_OTHER_EXERCISES =
     sizeof(OTHER_EXERCISES) / sizeof(OTHER_EXERCISES[0]);
 
 
-// ===================== WORKOUT LOG & SUMMARY =====================
+// WORKOUT LOG & SUMMARY 
 
 // Cardio: calories depend on exercise name + intensity
 int estimateCardioCalories(const string &exercise, int durationMinutes, int intensityLevel) {
@@ -455,21 +455,21 @@ void showAchievementsScreen(const UserProfile &user) {
     cout << COL_MENU << "Achievement List\n" << COL_RESET;
 
     // Consistency Star
-    cout << (consistencyUnlocked ? "" : COL_LOCKED);
+    cout << (consistencyUnlocked ? "" : COL_MUTED);
     cout << "\n- Consistency Star (Log workouts on 5 days)\n";
     cout << "  Status  : " << (consistencyUnlocked ? "Unlocked" : "Locked") << "\n";
     cout << "  Progress: " << total.daysLogged << "/" << REQ_DAYS << " days\n";
     cout << COL_RESET;
     
     // Endurance Hero
-    cout << (enduranceUnlocked ? "" : COL_LOCKED);
+    cout << (enduranceUnlocked ? "" : COL_MUTED);
     cout << "\n- Endurance Hero (Accumulate 300 minutes of training)\n";
     cout << "  Status  : " << (enduranceUnlocked ? "Unlocked" : "Locked") << "\n";
     cout << "  Progress: " << total.totalMinutes << "/" << REQ_MINUTES << " min\n";
     cout << COL_RESET;
     
     // Calorie Crusher
-    cout << (calorieUnlocked ? "" : COL_LOCKED);
+    cout << (calorieUnlocked ? "" : COL_MUTED);
     cout << "\n- Calorie Crusher (Burn 2000 total calories)\n";
     cout << "  Status  : " << (calorieUnlocked ? "Unlocked" : "Locked") << "\n";
     cout << "  Progress: " << total.totalCalories << "/" << REQ_CALORIES << " kcal\n";

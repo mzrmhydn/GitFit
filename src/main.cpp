@@ -22,7 +22,6 @@ void showMenu() {
 }
 
 int main() {
-    srand(static_cast<unsigned int>(time(0)));
 
     UserProfile profiles[MAX_PROFILES];
     int profileCount        = loadAllProfiles(profiles, MAX_PROFILES);

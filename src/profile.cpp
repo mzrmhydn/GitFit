@@ -1,9 +1,12 @@
 #include "gitfit.hpp"
 
-// ===================== PROFILE HANDLING =====================
+// PROFILE HANDLING 
 
 // Each profile is stored as:
 // name|age|gender|heightCm|weightKg|goal|dietPreference
+
+// load all profiles from file, returns number loaded
+
 int loadAllProfiles(UserProfile profiles[], int maxProfiles) {
     ifstream in(PROFILES_FILE.c_str());
     if (!in) return 0;
@@ -11,7 +14,7 @@ int loadAllProfiles(UserProfile profiles[], int maxProfiles) {
     string line;
     int count = 0;
 
-    while (getline(in, line) && count < maxProfiles) {
+    while (getline(in, line) && count < maxProfiles){
         if (line.empty()) continue;
         stringstream ss(line);
         string token;
@@ -41,6 +44,8 @@ int loadAllProfiles(UserProfile profiles[], int maxProfiles) {
     return count;
 }
 
+// save all profiles to file
+
 void saveAllProfiles(UserProfile profiles[], int count) {
     ofstream out(PROFILES_FILE.c_str());
     if (!out) {
@@ -61,6 +66,29 @@ void saveAllProfiles(UserProfile profiles[], int count) {
     out.close();
 }
 
+// append a single profile to file
+
+void appendProfileToFile(const UserProfile &u) {
+    ofstream out(PROFILES_FILE.c_str(), ios::app);
+    if (!out) {
+        cout << COL_WARN << "Error: Could not append to profiles file.\n" << COL_RESET;
+        return;
+    }
+
+    out << u.name << '|'
+        << u.age << '|'
+        << u.gender << '|'
+        << u.heightCm << '|'
+        << u.weightKg << '|'
+        << u.goal << '|'
+        << u.dietPreference << '\n';
+
+    out.close();
+}
+
+
+// List all profiles
+
 void listProfiles(UserProfile profiles[], int count) {
     cout << "Existing Profiles:\n";
     cout << "-----------------------------------------------------\n";
@@ -71,6 +99,8 @@ void listProfiles(UserProfile profiles[], int count) {
     }
     cout << "-----------------------------------------------------\n";
 }
+
+//choose profile index, returns -1 if cancelled
 
 int chooseProfileIndex(UserProfile profiles[], int count) {
     if (count == 0) {
@@ -121,7 +151,7 @@ void deleteWorkoutLogsForProfile(const string &profileName) {
     out.close();
 }
 
-// --------- CREATE PROFILE ---------
+// CREATE PROFILE 
 
 void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
     if (count >= MAX_PROFILES) {
@@ -154,11 +184,23 @@ void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
     cout << " 4) strength  - Get stronger\n";
     cout << " 5) stamina   - Improve endurance\n";
     int g = getIntInRange("Enter choice (1-5): ", 1, 5);
-    if      (g == 1) u.goal = "lose";
-    else if (g == 2) u.goal = "maintain";
-    else if (g == 3) u.goal = "gain";
-    else if (g == 4) u.goal = "strength";
-    else             u.goal = "stamina";
+
+    switch(g) {
+    case 1:
+        u.goal = "lose";
+        break;
+    case 2:
+        u.goal = "maintain";
+        break;
+    case 3:
+        u.goal = "gain";
+        break;
+    case 4:
+        u.goal = "strength";
+        break;
+    default:
+        u.goal = "stamina";
+    }
 
     cout << "\nDiet preference:\n";
     cout << " 1) veg\n";
@@ -172,12 +214,13 @@ void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
     count++;
     currentIndex = count - 1;
 
-    saveAllProfiles(profiles, count);
+    appendProfileToFile(u);
+    
     cout << COL_OK << "New profile saved and set as active.\n" << COL_RESET;
     pauseScreen();
 }
 
-// --------- VIEW PROFILE ---------
+// VIEW PROFILE 
 
 void viewProfile(const UserProfile &user) {
     clearScreen();
@@ -195,7 +238,7 @@ void viewProfile(const UserProfile &user) {
     pauseScreen();
 }
 
-// --------- UPDATE PROFILE (field-wise with back) ---------
+// UPDATE PROFILE
 
 void updateCurrentProfile(UserProfile profiles[], int count, int currentIndex) {
     if (currentIndex < 0 || currentIndex >= count) {
@@ -288,7 +331,7 @@ void updateCurrentProfile(UserProfile profiles[], int count, int currentIndex) {
     }
 }
 
-// --------- DELETE CURRENT PROFILE (and its logs) ---------
+// DELETE CURRENT PROFILE (and its logs)
 
 void deleteCurrentProfile(UserProfile profiles[], int &count, int &currentIndex) {
     if (currentIndex < 0 || currentIndex >= count) {

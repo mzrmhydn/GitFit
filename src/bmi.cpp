@@ -1,6 +1,6 @@
 #include "gitfit.hpp"
 
-// ===================== BMI =====================
+// BMI 
 
 float calculateBMI(const UserProfile &user) {
     float h = user.heightCm / 100.0f;

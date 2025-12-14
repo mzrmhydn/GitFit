@@ -1,6 +1,6 @@
 #include "gitfit.hpp"
 
-// ===================== DIET PLAN =====================
+// DIET PLAN 
 
 void printMeal(const string &title,
                const string &foods,

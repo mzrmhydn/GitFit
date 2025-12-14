@@ -1,0 +1,3 @@
+Mazhar|1|Aerobic dance / Zumba|15|135
+Mazhar|1|Walking (light)|124|372
+Mazhar|1|Pull-ups / Lat pulldown (5x5)|10|20
