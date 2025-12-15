@@ -60,35 +60,58 @@ const int NUM_OTHER_EXERCISES =
 // WORKOUT LOG & SUMMARY 
 
 // Cardio: calories depend on exercise name + intensity
-int estimateCardioCalories(const string &exercise, int durationMinutes, int intensityLevel) {
-    string e = toLowerString(exercise);
+int estimateCardioCalories(int choice, int durationMinutes, int intensityLevel) {
 
-    int basePerMin = 6; // default moderate
-
-    if (e.find("walk") != string::npos)
-        basePerMin = 4;
-    else if (e.find("jog") != string::npos)
-        basePerMin = 7;
-    else if (e.find("run") != string::npos)
-        basePerMin = 10;
-    else if (e.find("cycle") != string::npos || e.find("bike") != string::npos)
-        basePerMin = 8;
-    else if (e.find("swim") != string::npos)
-        basePerMin = 9;
-    else if (e.find("elliptical") != string::npos)
-        basePerMin = 8;
-    else if (e.find("row") != string::npos)
-        basePerMin = 9;
-    else if (e.find("stair") != string::npos)
-        basePerMin = 8;
-    else if (e.find("rope") != string::npos)
-        basePerMin = 10;
-    else if (e.find("hiit") != string::npos)
-        basePerMin = 11;
-    else if (e.find("dance") != string::npos || e.find("zumba") != string::npos)
-        basePerMin = 7;
-    else if (e.find("sport") != string::npos)
-        basePerMin = 8;
+    int basePerMin; // default moderate
+    switch(choice){
+        case 1:
+            basePerMin = 4;
+            break;
+        case 2:
+            basePerMin = 4;
+            break;
+        case 3:
+            basePerMin = 7;
+            break;
+        case 4:
+            basePerMin = 10;
+            break;
+        case 5:
+            basePerMin = 8;
+            break;
+        case 6:
+            basePerMin = 8;
+            break;
+        case 7:
+            basePerMin = 10;
+            break;
+        case 8:
+            basePerMin = 8;
+            break;
+        case 9:
+            basePerMin = 9;
+            break;
+        case 10:
+            basePerMin = 9;
+            break;
+        case 11:
+            basePerMin = 10;
+            break;
+        case 12:
+            basePerMin = 8;
+            break;
+        case 13:
+            basePerMin = 9;
+            break;
+        case 14:
+            basePerMin = 7;
+            break;
+        case 15:
+            basePerMin = 11;
+            break;
+        default:
+            basePerMin = 6;
+    }
 
     // adjust by intensity
     if (intensityLevel == 1)      basePerMin -= 2;  // easy
@@ -99,20 +122,35 @@ int estimateCardioCalories(const string &exercise, int durationMinutes, int inte
 }
 
 // Strength: calories depend on sets * reps + intensity
-int estimateStrengthCalories(const string &exercise, int sets, int repsPerSet, int intensityLevel) {
+int estimateStrengthCalories(int choice, int sets, int repsPerSet, int intensityLevel) {
     int totalReps = sets * repsPerSet;
 
-    double basePerRep = 0.5; // default
-    string e = toLowerString(exercise);
+    double basePerRep;
 
     // heavy compound lifts burn more per rep
-    if (e.find("squat") != string::npos || e.find("deadlift") != string::npos)
-        basePerRep = 0.8;
-    else if (e.find("bench") != string::npos || e.find("push") != string::npos)
-        basePerRep = 0.6;
-    else if (e.find("row") != string::npos || e.find("pull") != string::npos)
-        basePerRep = 0.7;
-
+    switch(choice){
+        case 1:
+            basePerRep = 0.6;
+            break;
+        case 2:
+            basePerRep = 0.6;
+            break;
+        case 4:
+            basePerRep = 0.7;
+            break;
+        case 5:
+            basePerRep = 0.7;
+            break;
+        case 6:
+            basePerRep = 0.8;
+            break;
+        case 7:
+            basePerRep = 0.8;
+            break;
+        default:
+            basePerRep = 0.5;
+    }
+    cout << "Choice: " << choice << " BasePerRep: " << basePerRep << "\n";
     // adjust for intensity
     if (intensityLevel == 1)      basePerRep *= 0.8;
     else if (intensityLevel == 3) basePerRep *= 1.2;
@@ -120,6 +158,35 @@ int estimateStrengthCalories(const string &exercise, int sets, int repsPerSet, i
     int calories = static_cast<int>(totalReps * basePerRep);
     if (calories < 5) calories = 5;
     return calories;
+}
+
+int estimateOtherCalories(int choice, int durationMinutes, int intensityLevel) {
+
+    int basePerMin; // default moderate
+    switch(choice){
+        case 1:
+            basePerMin = 5;
+            break;
+        case 2:
+            basePerMin = 7;
+            break;
+        case 3:
+            basePerMin = 4;
+            break;
+        case 4:
+            basePerMin = 5;
+            break;
+        
+        default:
+            basePerMin = 6;
+    }
+
+    // adjust by intensity
+    if (intensityLevel == 1)      basePerMin -= 2;  // easy
+    else if (intensityLevel == 3) basePerMin += 2;  // hard
+
+    if (basePerMin < 3) basePerMin = 3;
+    return durationMinutes * basePerMin;
 }
 
 void addWorkoutLog(const UserProfile &user) {
@@ -131,7 +198,7 @@ void addWorkoutLog(const UserProfile &user) {
     cout << "Pick the type of workout, then choose an exercise from the list.\n\n";
 
     WorkoutLog log;
-    log.profileName = user.name;  // bind log to current profile
+    log.profileID = user.id;  // bind log to current profile
     log.weekNumber = getIntInRange(
         "Enter week number for this workout (1-52): ", 1, 52);
 
@@ -142,13 +209,14 @@ void addWorkoutLog(const UserProfile &user) {
     int workoutType = getIntInRange("Choose workout type (1-3): ", 1, 3);
 
     string baseExerciseName;
-
+    int exChoice;
+    
     if (workoutType == 1) {
         cout << "\nSelect a CARDIO exercise from the list:\n";
         for (int i = 0; i < NUM_CARDIO_EXERCISES; ++i) {
             cout << " " << (i + 1) << ") " << CARDIO_EXERCISES[i] << "\n";
         }
-        int exChoice = getIntInRange(
+        exChoice = getIntInRange(
             "Enter your choice (1-" + to_string(NUM_CARDIO_EXERCISES) + "): ",
             1, NUM_CARDIO_EXERCISES
         );
@@ -158,7 +226,7 @@ void addWorkoutLog(const UserProfile &user) {
         for (int i = 0; i < NUM_STRENGTH_EXERCISES; ++i) {
             cout << " " << (i + 1) << ") " << STRENGTH_EXERCISES[i] << "\n";
         }
-        int exChoice = getIntInRange(
+        exChoice = getIntInRange(
             "Enter your choice (1-" + to_string(NUM_STRENGTH_EXERCISES) + "): ",
             1, NUM_STRENGTH_EXERCISES
         );
@@ -168,7 +236,7 @@ void addWorkoutLog(const UserProfile &user) {
         for (int i = 0; i < NUM_OTHER_EXERCISES; ++i) {
             cout << " " << (i + 1) << ") " << OTHER_EXERCISES[i] << "\n";
         }
-        int exChoice = getIntInRange(
+        exChoice = getIntInRange(
             "Enter your choice (1-" + to_string(NUM_OTHER_EXERCISES) + "): ",
             1, NUM_OTHER_EXERCISES
         );
@@ -181,14 +249,14 @@ void addWorkoutLog(const UserProfile &user) {
     cout << " 3) Hard\n";
     int intensity = getIntInRange("Intensity (1-3): ", 1, 3);
 
-    if (workoutType == 1 || workoutType == 3) {
+    if (workoutType == 1) {
         // CARDIO / OTHER: ask for duration only
         cout << "\nEnter duration of the cardio part in minutes (5-300): ";
         log.durationMinutes = getIntInRange("", 5, 300);
 
         log.exercise = baseExerciseName;
         log.caloriesBurned = estimateCardioCalories(
-            log.exercise,
+            exChoice,
             log.durationMinutes,
             intensity
         );
@@ -197,7 +265,7 @@ void addWorkoutLog(const UserProfile &user) {
              << "\n(We estimated calories based on exercise type + intensity.)\n"
              << COL_RESET;
 
-    } else {
+    } else if(workoutType == 2) {
         // STRENGTH: ask for sets and reps, derive approx minutes + calories
         int sets = getIntInRange(
             "\nEnter number of sets (1-30): ", 1, 30);
@@ -210,7 +278,7 @@ void addWorkoutLog(const UserProfile &user) {
 
         log.exercise = baseExerciseName;
         log.caloriesBurned = estimateStrengthCalories(
-            log.exercise,
+            exChoice,
             sets,
             reps,
             intensity
@@ -223,7 +291,22 @@ void addWorkoutLog(const UserProfile &user) {
              << "\n(We estimated workout time and calories based on sets, reps, and exercise.)\n"
              << COL_RESET;
     }
+    else{
+        // CARDIO / OTHER: ask for duration only
+        cout << "\nEnter duration of the cardio part in minutes (5-300): ";
+        log.durationMinutes = getIntInRange("", 5, 300);
 
+        log.exercise = baseExerciseName;
+        log.caloriesBurned = estimateOtherCalories(
+            exChoice,
+            log.durationMinutes,
+            intensity
+        );
+
+        cout << COL_MUTED
+             << "\n(We estimated calories based on exercise type + intensity.)\n"
+             << COL_RESET;
+    }
     ofstream out(WORKOUT_LOG_FILE.c_str(), ios::app);
     if (!out) {
         cout << COL_WARN << "Error: Could not open workout log file.\n" << COL_RESET;
@@ -231,8 +314,8 @@ void addWorkoutLog(const UserProfile &user) {
         return;
     }
 
-    // File format: profileName|week|exercise|minutes|calories
-    out << log.profileName << '|'
+    // File format: profileID|week|exercise|minutes|calories
+    out << log.profileID << '|'
         << log.weekNumber << '|'
         << log.exercise << '|'
         << log.durationMinutes << '|'
@@ -241,7 +324,7 @@ void addWorkoutLog(const UserProfile &user) {
     out.close();
 
     cout << COL_OK << "\nWorkout logged successfully!\n" << COL_RESET;
-    cout << " Profile           : " << log.profileName    << "\n";
+    cout << " Profile           : " << user.name    << "\n";
     cout << " Exercise          : " << log.exercise        << "\n";
     cout << " Estimated time    : " << log.durationMinutes << " minutes\n";
     cout << " Estimated calories: " << log.caloriesBurned  << " kcal\n\n";
@@ -265,11 +348,11 @@ WeeklySummary computeWeeklySummary(const UserProfile &user, int selectedWeek) {
         WorkoutLog log;
         string token;
 
-        // profileName
-        getline(ss, log.profileName, '|');
-        if (log.profileName != user.name) {
-            // log belongs to some other profile
-            continue;
+        // profileId
+        getline(ss, token, '|');
+        log.profileID = atoi(token.c_str());
+        if (log.profileID != user.id) {
+            continue; // log belongs to some other profile
         }
 
         // weekNumber
@@ -315,10 +398,11 @@ WeeklySummary computeOverallSummary(const UserProfile &user) {
         WorkoutLog log;
         string token;
 
-        // profileName
-        getline(ss, log.profileName, '|');
-        if (log.profileName != user.name) {
-            continue;
+        // profileId
+        getline(ss, token, '|');
+        log.profileID = atoi(token.c_str());
+        if (log.profileID != user.id) {
+            continue; // log belongs to some other profile
         }
 
         // weekNumber (ignored, but consumed)
@@ -362,7 +446,7 @@ void showAchievements(const WeeklySummary &summary) {
         any = true;
     }
     if (!any) {
-        cout << " No badges yet — this is your chance to earn one!\n";
+        cout << " No badges yet - this is your chance to earn one!\n";
     }
     cout << '\n';
 }

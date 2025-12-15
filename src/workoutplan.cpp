@@ -11,7 +11,8 @@ void generateWorkoutPlan(const UserProfile &user) {
     cout << "This is a simple guide, not medical advice.\n\n";
 
     string goal = user.goal;
-    char change = getYesNo("Use profile goal '" + user.goal + "'? (y/n): ");
+    char change = getCharFromOptions("Use profile goal '" + user.goal + "'? (y/n): ", "YynN");
+    change = tolower(change);
 
     if (change == 'n') {
         cout << "\nChoose goal:\n";
@@ -34,7 +35,7 @@ void generateWorkoutPlan(const UserProfile &user) {
         "How many days can you work out per week (1-7)? ", 1, 7);
 
     // Age-based recommendation 
-    int ageDifficulty = 2; // default moderate
+    int ageDifficulty;
 
     if (user.age >= 15 && user.age <= 30) {
         ageDifficulty = 3; // challenging

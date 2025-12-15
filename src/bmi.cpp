@@ -3,9 +3,9 @@
 // BMI 
 
 float calculateBMI(const UserProfile &user) {
-    float h = user.heightCm / 100.0f;
-    if (h <= 0) return 0.0f;
-    return user.weightKg / (h * h);
+    float height_m = user.heightCm / 100.0f;
+    if (height_m <= 0) return 0.0f;
+    return user.weightKg / (height_m * height_m);
 }
 
 string interpretBMI(float bmi) {

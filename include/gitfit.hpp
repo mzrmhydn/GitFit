@@ -17,6 +17,7 @@ using namespace std;
 // DATA STRUCTURES
 
 struct UserProfile {
+    int id;
     string name;
     int age;
     char gender;           // 'M' / 'F'
@@ -27,7 +28,7 @@ struct UserProfile {
 };
 
 struct WorkoutLog {
-    string profileName;   // identify which profile the log belongs to
+    int profileID;   // identify which profile the log belongs to
     int weekNumber;
     string exercise;
     int durationMinutes;
@@ -65,7 +66,6 @@ void printMainBanner();
 int   getIntInRange(const string &prompt, int minVal, int maxVal);
 float getFloatInRange(const string &prompt, float minVal, float maxVal);
 char  getCharFromOptions(const string &prompt, const string &options);
-char  getYesNo(const string &prompt);
 
 // string helpers
 string toLowerString(string s);
@@ -79,6 +79,7 @@ int  chooseProfileIndex(UserProfile profiles[], int count);
 void deleteWorkoutLogsForProfile(const string &profileName);
 
 void createNewProfile(UserProfile profiles[], int &count, int &currentIndex);
+int getNextProfileId(UserProfile profiles[], int count);
 void viewProfile(const UserProfile &user);
 void updateCurrentProfile(UserProfile profiles[], int count, int currentIndex);
 void deleteCurrentProfile(UserProfile profiles[], int &count, int &currentIndex);
@@ -102,8 +103,9 @@ void generateDietPlan(const UserProfile &user);
 
 // WORKOUT LOG & SUMMARY 
 
-int estimateCardioCalories(const string &exercise, int durationMinutes, int intensityLevel);
-int estimateStrengthCalories(const string &exercise, int sets, int repsPerSet, int intensityLevel);
+int estimateCardioCalories(int choice, int durationMinutes, int intensityLevel);
+int estimateOtherCalories(int choice, int durationMinutes, int intensityLevel);
+int estimateStrengthCalories(int choice, int sets, int repsPerSet, int intensityLevel);
 
 void          addWorkoutLog(const UserProfile &user);
 WeeklySummary computeWeeklySummary(const UserProfile &user, int selectedWeek);

@@ -24,7 +24,7 @@ void showMenu() {
 int main() {
 
     UserProfile profiles[MAX_PROFILES];
-    int profileCount        = loadAllProfiles(profiles, MAX_PROFILES);
+    int profileCount = loadAllProfiles(profiles, MAX_PROFILES);
     int currentProfileIndex = -1;
 
     if (profileCount > 0) {
@@ -54,7 +54,7 @@ int main() {
 
         if (currentProfileIndex >= 0) {
             cout << COL_OK << "Active profile: " << profiles[currentProfileIndex].name
-                 << "  [" << profiles[currentProfileIndex].goal
+                 << "  [" << profiles[currentProfileIndex].id << ", " << profiles[currentProfileIndex].goal
                  << ", " << profiles[currentProfileIndex].dietPreference << "]\n\n"
                  << COL_RESET;
         } else {

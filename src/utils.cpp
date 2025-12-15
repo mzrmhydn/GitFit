@@ -92,22 +92,6 @@ char getCharFromOptions(const string &prompt, const string &options) {
     }
 }
 
-char getYesNo(const string &prompt) {
-    char c;
-    while (true) {
-        cout << prompt;
-        if (!(cin >> c)) {
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << COL_WARN << "Invalid input. Enter y or n.\n" << COL_RESET;
-            continue;
-        }
-        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-        if (c == 'y' || c == 'n') return c;
-        cout << COL_WARN << "Please enter 'y' or 'n'.\n" << COL_RESET;
-    }
-}
-
 string toLowerString(string s) {
     for (char &c : s) {
         c = static_cast<char>(tolower(static_cast<unsigned char>(c)));

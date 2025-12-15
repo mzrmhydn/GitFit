@@ -20,6 +20,9 @@ int loadAllProfiles(UserProfile profiles[], int maxProfiles) {
         string token;
         UserProfile u;
 
+        getline(ss, token, '|');
+        u.id = atoi(token.c_str());
+
         getline(ss, u.name, '|');
 
         getline(ss, token, '|');
@@ -54,7 +57,8 @@ void saveAllProfiles(UserProfile profiles[], int count) {
     }
 
     for (int i = 0; i < count; i++) {
-        out << profiles[i].name << '|'
+        out << profiles[i].id << '|'
+            << profiles[i].name << '|'  
             << profiles[i].age << '|'
             << profiles[i].gender << '|'
             << profiles[i].heightCm << '|'
@@ -75,7 +79,8 @@ void appendProfileToFile(const UserProfile &u) {
         return;
     }
 
-    out << u.name << '|'
+    out << u.id << '|'
+        << u.name << '|'
         << u.age << '|'
         << u.gender << '|'
         << u.heightCm << '|'
@@ -115,7 +120,7 @@ int chooseProfileIndex(UserProfile profiles[], int count) {
 }
 
 // Delete all workout logs for a given profile
-void deleteWorkoutLogsForProfile(const string &profileName) {
+void deleteWorkoutLogsForProfile(int profileId) {
     ifstream in(WORKOUT_LOG_FILE.c_str());
     if (!in) {
         // No log file yet, nothing to do
@@ -129,10 +134,11 @@ void deleteWorkoutLogsForProfile(const string &profileName) {
         if (line.empty()) continue;
 
         stringstream ss(line);
-        string nameToken;
-        getline(ss, nameToken, '|'); // profileName is first field
+        string token;
+        getline(ss, token, '|'); // profileName is first field
+        int id = atoi(token.c_str());
 
-        if (nameToken != profileName) {
+        if (id != profileId) {
             keptLines.push_back(line);
         }
     }
@@ -153,6 +159,15 @@ void deleteWorkoutLogsForProfile(const string &profileName) {
 
 // CREATE PROFILE 
 
+    // Get next available profile ID
+
+int getNextProfileId(UserProfile profiles[], int count) {
+    int maxId = 0;
+    for (int i = 0; i < count; i++) maxId = max(maxId, profiles[i].id);
+    return maxId + 1;
+}
+
+
 void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
     if (count >= MAX_PROFILES) {
         cout << COL_WARN << "Maximum number of profiles reached.\n" << COL_RESET;
@@ -168,10 +183,25 @@ void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
 
     UserProfile u;
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    
+    do {
+        cout << "Enter your name (or 0 to cancel): ";
+        getline(cin, u.name);
 
-    cout << "Enter your name: ";
-    getline(cin, u.name);
+        if (u.name == "0") {
+            cout << COL_WARN << "Profile creation cancelled.\n" << COL_RESET;
+            pauseScreen();
+            return;
+        }
 
+        if (u.name.empty()) {
+            cout << COL_WARN
+                << "Name cannot be empty. Please enter a valid name.\n"
+                << COL_RESET;
+        }
+    }while (u.name.empty());
+
+    u.id       = getNextProfileId(profiles, count);
     u.age      = getIntInRange("Enter your age (10-75): ", 15, 75);
     u.gender   = getCharFromOptions("Enter gender (M/F): ", "MmFf");
     u.heightCm = getFloatInRange("Enter height (in cm, 100-250): ", 100.0f, 250.0f);
@@ -215,7 +245,7 @@ void createNewProfile(UserProfile profiles[], int &count, int &currentIndex) {
     currentIndex = count - 1;
 
     appendProfileToFile(u);
-    
+
     cout << COL_OK << "New profile saved and set as active.\n" << COL_RESET;
     pauseScreen();
 }
@@ -227,6 +257,9 @@ void viewProfile(const UserProfile &user) {
     printMainBanner();
 
     cout << COL_TITLE << ">>> Active Profile Overview\n\n" << COL_RESET;
+    cout << " ---------------------------------------------------\n";
+    cout << " Profile Details:\n\n";
+    cout << " ID             : " << user.id << '\n';
     cout << " Name           : " << user.name << '\n';
     cout << " Age            : " << user.age << '\n';
     cout << " Gender         : " << user.gender << '\n';
@@ -350,14 +383,14 @@ void deleteCurrentProfile(UserProfile profiles[], int &count, int &currentIndex)
          << "' and all of its workout logs.\n"
          << COL_RESET;
 
-    char confirm = getYesNo("Are you sure you want to continue? (y/n): ");
+    char confirm = getCharFromOptions("Are you sure you want to continue? (y/n): ", "YyNn");
+    confirm = tolower(confirm);
+    
     if (confirm != 'y') {
         cout << "\nDeletion cancelled.\n";
         pauseScreen();
         return;
     }
-
-    string deletedName = profiles[currentIndex].name;
 
     // Shift profiles left to fill the gap
     for (int i = currentIndex; i < count - 1; ++i) {
@@ -366,7 +399,7 @@ void deleteCurrentProfile(UserProfile profiles[], int &count, int &currentIndex)
     count--;
 
     saveAllProfiles(profiles, count);
-    deleteWorkoutLogsForProfile(deletedName);
+    deleteWorkoutLogsForProfile(profiles[currentIndex].id);
 
     if (count == 0) {
         currentIndex = -1;

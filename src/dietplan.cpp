@@ -20,7 +20,9 @@ void generateDietPlan(const UserProfile &user) {
     cout << "You can adjust portion sizes according to your hunger.\n\n";
 
     string dietType = user.dietPreference;
-    char ch = getYesNo("Use profile diet preference '" + dietType + "'? (y/n): ");
+    char ch = getCharFromOptions("Use profile diet preference '" + dietType + "'? (y/n): ","YynN");
+    ch = tolower(ch);
+    
     if (ch == 'n') {
         cout << "Choose preference: 1) veg  2) non-veg\n";
         int x = getIntInRange("Enter choice (1-2): ", 1, 2);

@@ -1,7 +1,1 @@
-Mazhar|19|M|170|67|gain|non-veg
-Abdullah|19|M|175|65|gain|non-veg
-Usman |40|M|180|80|gain|non-veg
-Saad|60|M|170|75|gain|non-veg
-Nigga|19|F|120|100|lose|non-veg
-Nooga|30|M|180|100|stamina|non-veg
-Neeega|25|M|190|110|maintain|non-veg
+1|Mazhar|19|M|170|67|gain|non-veg
